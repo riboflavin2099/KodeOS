@@ -1,0 +1,51 @@
+# Internal-RAM budget for this app, for the SDK's tools/check_ram.sh
+# (kode-apps rule B8). It has not been run: this file is the SDK's
+# tests/target/ram_budget.txt at commit 1841cc8, without the Active Objects
+# this app's sdkconfig.defaults turns off (radio, net, scheduler), plus the
+# app Active Object's stack.
+#
+# static_max is the SDK's own ceiling for the full image. Do not raise it
+# without a static_max_why line, and not past 417000 (rule B8).
+#
+# The first real link will show symbols this list still names and no longer
+# has (LVGL, if the app did not pull it) and any new one of 2048 bytes or
+# more. Fix the list from that output. The frame task's stack is allocated
+# at run time, so it has no line here; it still comes out of internal RAM.
+static_max 368520
+
+# symbol               source file          max bytes
+
+console_stack          console_ao.c         8192
+appmgr_stack           appmgr_ao.c          8192
+storage_stack          storage_ao.c         6144
+nfc_stack              nfc_ao.c             6144
+display_stack          display_ao.c         6144
+touch_stack            touch_ao.c           4096
+power_stack            power_ao.c           4096
+log_stack              log_ao.c             4096
+ioexp_stack            ioexp_ao.c           4096
+imu_stack              imu_ao.c             4096
+boot_stack             boot_ao.c            4096
+autotest_stack         autotest_ao.c        4096
+rfid_stack             rfid_ao.c            3072
+ledmgr_stack           led_mgr.c            3072
+ir_stack               ir_ao.c              3072
+haptic_stack           haptic_ao.c          3072
+buttons_stack          buttons_ao.c         3072
+audio_stack            audio_ao.c           3072
+
+s_watch_stack          khal_system_esp.c    3072
+
+s_jumbo_pool           kqp.c                16432
+s_medium_pool          kqp.c                16128
+s_large_pool           kqp.c                16512
+
+l_console              console_ao.c         4096
+
+lv_global              lv_init.c            17408
+xIsrStack              port.c               4192
+s_retention            sleep_retention.c    2816
+gNfcDev                rfal_nfc.c           2560
+
+# The app Active Object. Internal because an Active Object may write flash.
+s_stack                app_ao.c             8192
