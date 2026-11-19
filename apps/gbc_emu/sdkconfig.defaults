@@ -1,0 +1,21 @@
+# This app's settings. Flash, PSRAM, the cache and the console baud come from
+# kbsp's sdkconfig.board, which CMakeLists.txt puts first in SDKCONFIG_DEFAULTS.
+# Do not copy those keys here (kode-apps rule B5).
+
+# Resolved against this project directory. The catalogue form, after the SDK
+# is fetched, is managed_components/kodediy__kbsp/partitions.csv.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="../../sdk/components/kbsp/partitions.csv"
+
+# This firmware never writes otadata, so any reset returns to kodeOS.
+CONFIG_KODEOS_BOOT_ROLE_APP=y
+
+# The console over the USB-C cable, so the log is visible while a ROM runs.
+CONFIG_KODEOS_CONSOLE=y
+
+# No radio. esp-hosted would otherwise claim the SDMMC controller before app_main.
+CONFIG_KODEOS_RADIO=n
+CONFIG_ESP_HOSTED_ENABLED=n
+CONFIG_BT_ENABLED=n
+
+# The interpreter's inner loop wants speed. kodeOS itself builds for size.
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
