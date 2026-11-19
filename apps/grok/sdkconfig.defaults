@@ -1,0 +1,39 @@
+# This app's settings. Flash, PSRAM, the cache and the console baud come from
+# kbsp's sdkconfig.board, which CMakeLists.txt puts first in SDKCONFIG_DEFAULTS.
+# Do not copy those keys here (kode-apps rule B5).
+
+# Resolved against this project directory. The catalogue form, after the SDK
+# is fetched, is managed_components/kodediy__kbsp/partitions.csv.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="../../sdk/components/kbsp/partitions.csv"
+
+# This firmware never writes otadata, so any reset returns to kodeOS.
+CONFIG_KODEOS_BOOT_ROLE_APP=y
+
+# The console over the USB-C cable. A board that has never joined a network
+# can type wifi_join here, and the log shows the request without the key.
+CONFIG_KODEOS_CONSOLE=y
+
+# Wi-Fi is the ESP32-C5 over esp-hosted. The board file leaves
+# ESP_HOSTED_ENABLED off so a radio-less app does not claim the SDMMC
+# controller. This app needs the link, and KODEOS_RADIO selects it. Saying
+# y here as well wins over the board file, which is read first.
+#
+# The network stack is large (the network example measured about 395 KB of
+# image before a socket was opened). An app pays it once. MQTT stays off.
+CONFIG_KODEOS_RADIO=y
+CONFIG_ESP_HOSTED_ENABLED=y
+CONFIG_KODEOS_WIFI=y
+CONFIG_KODEOS_NET=y
+CONFIG_KODEOS_WIFI_AUTOJOIN=y
+CONFIG_KODEOS_MQTT=n
+CONFIG_KODEOS_CHANNEL=n
+CONFIG_BT_ENABLED=n
+
+# https://api.x.ai is checked against the Mozilla bundle esp_crt_bundle_attach
+# installs. The board file already allows a cross-signed root.
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+
+# The chat client is not a tight loop. Size is the right default. kodeOS
+# itself also builds for size. The network example's note stands: INFO logs
+# cost flash, and this scaffold keeps them so a bench run can be read.
+# CONFIG_COMPILER_OPTIMIZATION_SIZE=y
