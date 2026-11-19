@@ -39,7 +39,7 @@ idf.py set-target esp32p4
 idf.py build
 ```
 
-The image is `build/gbc_emu.bin`. A build with ESP-IDF v6.1 against this tree's SDK produced an image of `0xafd50` bytes, about 703 KB, which fits the mailbox.
+The image is `build/gbc_emu.bin`. A build with ESP-IDF v6.1 against this tree's SDK, with Walnut linked, produced an image of `0xbb920` bytes, about 750 KB, which fits the mailbox.
 
 `set-target` is only needed on a fresh tree. `idf.py build` is enough after that.
 

@@ -16,6 +16,7 @@ idf_component_register(
                  "${CMAKE_CURRENT_LIST_DIR}/../third_party/walnut-cgb"
                  "${CMAKE_CURRENT_LIST_DIR}/../third_party/walnut-cgb/minigb_apu"
     REQUIRES kode kdrv
+    PRIV_REQUIRES esp_timer
 )
 
 # The format macro has to be set before minigb_apu.h. Walnut is compiled into
