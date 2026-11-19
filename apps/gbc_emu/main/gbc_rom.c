@@ -35,8 +35,14 @@ static uint8_t *s_rom = NULL;
 /** @brief Bytes at s_rom. */
 static uint32_t s_rom_len = 0U;
 
-/** @brief Cartridge RAM from the save file. Held for the core; nothing reads it yet. */
+/** @brief Cartridge RAM from the save file. The core writes it. */
 static uint8_t *s_ram = NULL;
+
+/** @brief Bytes at s_ram. */
+static uint32_t s_ram_len = 0U;
+
+/** @brief File name of the published ROM, for the save path. */
+static char s_name[KODE_FILE_NAME_MAX];
 
 /**
  * @brief ASCII lower case, for the extension check. Other bytes pass through.
@@ -261,6 +267,9 @@ kode_status_t gbc_rom_boot_job(void *arg, uint32_t *value)
                     }
                     gbc_core_set_clock(saved_clock);
                     s_ram = ram;
+                    s_ram_len = hdr.ram_bytes;
+                    memset(s_name, 0, sizeof(s_name));
+                    strncpy(s_name, name, sizeof(s_name) - 1U);
                     s_rom = image;
                     s_rom_len = rom_len;
                     atomic_store_explicit(&s_published, 1U, memory_order_release);
@@ -288,8 +297,6 @@ const uint8_t *gbc_rom_data(uint32_t *len)
 
     if ( 0U != atomic_load_explicit(&s_published, memory_order_acquire) )
     {
-        /* s_ram is the cartridge RAM kept for the core. Nothing reads it yet. */
-        (void)s_ram;
         rom = s_rom;
         if ( NULL != len )
         {
@@ -301,4 +308,35 @@ const uint8_t *gbc_rom_data(uint32_t *len)
         *len = 0U;
     }
     return rom;
+}
+
+uint8_t *gbc_rom_ram(uint32_t *len)
+{
+    uint8_t *ram = NULL;
+
+    if ( 0U != atomic_load_explicit(&s_published, memory_order_acquire) )
+    {
+        ram = s_ram;
+        if ( NULL != len )
+        {
+            *len = s_ram_len;
+        }
+    }
+    else if ( NULL != len )
+    {
+        *len = 0U;
+    }
+    return ram;
+}
+
+const char *gbc_rom_name(void)
+{
+    const char *name = NULL;
+
+    if ( (0U != atomic_load_explicit(&s_published, memory_order_acquire))
+        && ('\0' != s_name[0]) )
+    {
+        name = s_name;
+    }
+    return name;
 }

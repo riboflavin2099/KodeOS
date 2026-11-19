@@ -29,6 +29,13 @@ void AppAo_ctor(void);
  */
 void AppAo_start(void);
 
+/**
+ * @brief Ask the worker to write the battery save. Safe from the frame task.
+ *
+ * Dropped when the Active Object's queue is full.
+ */
+void AppAo_request_save(void);
+
 #ifdef __cplusplus
 }
 #endif

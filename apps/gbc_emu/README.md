@@ -43,14 +43,16 @@ The image is `build/gbc_emu.bin`. A build with ESP-IDF v6.1 against this tree's 
 
 `set-target` is only needed on a fresh tree. `idf.py build` is enough after that.
 
-The header test does not need IDF:
+The host tests do not need IDF. From `apps/gbc_emu/host`:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Werror -I main -o /tmp/gbc_test_header host/test_header.c main/gbc_header.c
-/tmp/gbc_test_header
+python3 gen_scroll_rom.py   # rewrites roms/scroll.gb; already committed
+make run                    # Walnut on roms/scroll.gb, writes frame_30.ppm and frame_90.ppm
+make run ROM=/path/to/your.gbc
+make header                 # cartridge header parser
 ```
 
-It prints `OK header`.
+`make run` prints average and worst microseconds per guest frame on this machine. Those numbers are not an ESP32-P4 prediction. `roms/scroll.gb` is a DMG program written for this tree (see `roms/LICENSE`). It paints a stripe and scrolls it. Pass any other ROM path you are allowed to use. Do not commit a commercial ROM.
 
 ## Install and run
 
@@ -82,7 +84,15 @@ sd/gbc/saves/your-game.sav    created when a save exists
 sd/gbc/saves/your-game.rtc    8 little-endian bytes, Unix seconds
 ```
 
-The scaffold loads the first `.gb` or `.gbc` in the first 24 names of `sd/gbc`. With no card or no ROM it draws the idle picture (dark green, a moving white border). With a ROM and no core yet it draws the stand-in (darker fill, amber border). Top (A) lights the top-left guest pixel. The two zones under the picture are Start and Select. They light while a finger is in them. They do not reach a core yet.
+The app loads the first `.gb` or `.gbc` in the first 24 names of `sd/gbc` and runs it with Walnut-CGB. With no card or no ROM it draws the idle picture (dark green, a moving white border). Top is A, bottom is B, the pad is the D-pad, and the two zones under the picture are Start and Select. A header Walnut refuses draws the failure picture (dark red, white border) instead of the guest.
+
+Every 120 presented frames the frame task logs, at info, one line from core 1:
+
+```text
+gbc.frame: emu last N us avg N us worst N us loop N us drops N frames N audio N psram lcd N gb N rom N ram N
+```
+
+`emu` is `gb_run_frame_dualfetch` plus the resampler, in microseconds. `loop` is that plus the panel flip. `drops` counts presents the panel did not accept. `psram` is 1 when that pointer is in external RAM. The speaker mix runs; playback stays off until `GBC_SPEAKER` is set, because opening the codec stream belongs to AO_Audio. Cart RAM is written back about every 300 guest frames.
 
 `idf.py -p PORT monitor` shows `gbc.ao` and `gbc.frame`. The frame task logs every 120 presents.
 
@@ -107,19 +117,19 @@ The scaffold loads the first `.gb` or `.gbc` in the first 24 names of `sd/gbc`. 
 
 ## Roadmap
 
-1. Build this project with ESP-IDF v6.1 and install it with `kcli.py`. Confirm the idle picture moves, the touch zones light, top lights the corner pixel, and holding bottom returns to kodeOS. Capture one 410×502 screenshot with `kcli.py screenshot` for rule D9.
-2. Include `third_party/walnut-cgb/walnut_cgb.h` from `gbc_core.c` only. Define the ROM and RAM callbacks over the PSRAM buffers. Call `gb_run_frame_dualfetch()` once per frame. Start with `WALNUT_GB_32BIT_ALIGNED`. Log milliseconds per frame on core 1 with audio still off, on a double-speed CGB scene and on a DMG scene.
-3. If that stays inside the 16.8 ms panel period, wire `lcd_draw_line` to the RGB565 buffer (CGB palette indices and DMG shade-plus-layer are different). If it does not, try the other DMA macro, then binjgb. Do not switch to gnuboy unless its licence is shown to be GPL-2.0-or-later or the copyright holders relicense. See [FEASIBILITY.md](FEASIBILITY.md).
-4. Open the speaker stream from AO_Audio and write 48 kHz mono frames from the frame task with `kdrv_es8311_stream_write()`. Build minigb_apu with `MINIGB_APU_AUDIO_FORMAT_S16SYS`. Resample its 32,768 Hz stereo, or rebuild it at 48 kHz. Keep the write off the Active Object.
-5. Page the ROM list with `kode_file_list_from()` (24 names per page). Save from the worker on a timer and on the way home, using `gbc_save_store()`. Call Walnut's `gb_set_rtc()` with the clock `gbc_core_set_clock()` already stored. If `kode_time_unix()` is −1, say so in the log and keep the file's value.
-6. Run a permissive homebrew and, once their licences have been read, dmg-acid2 and cgb-acid2. Do not add those files to the repository until the grant is in the commit message. Do not add a commercial ROM at all.
-7. Split the app out as above and open the kode-apps pull request. Raise `PROJECT_VER` for every version that pull request publishes.
+Walnut is linked. `gb_run_frame_dualfetch` runs when a ROM is open, `lcd_draw_line` writes RGB565, the joypad is the existing pad, and minigb_apu is resampled to 48 kHz mono. What is left:
+
+1. Flash with `idf.py -p PORT flash` and read the `gbc.frame` line. The budget is about 16.8 ms. If a double-speed CGB scene misses it, try the other Walnut DMA macro, then binjgb. Do not switch to gnuboy unless its licence is GPL-2.0-or-later or the copyright holders relicense.
+2. Open the speaker stream from AO_Audio and pass the mono frames to `kdrv_es8311_stream_write` from the frame task. Set `GBC_SPEAKER` to 1 only after that open exists.
+3. Page the ROM list with `kode_file_list_from()`. The save job already runs about every 300 frames; also save on the way home.
+4. Run dmg-acid2 and cgb-acid2 once their licences have been read. Do not commit a commercial ROM.
+5. Split the app out as above and open the kode-apps pull request. Raise `PROJECT_VER` for every version that pull request publishes. Capture a 410×502 screenshot for rule D9.
 
 ## Known gaps
 
-- Guest instructions are not executed. The vendored core is not in the compile.
-- The speaker is silent on purpose.
+- The speaker mix runs and is dropped. `GBC_SPEAKER` stays 0 until AO_Audio opens the 48 kHz stream.
 - Only the first page of `sd/gbc` is scanned.
-- `ram_budget.txt` is unchecked against a link.
-- No screenshot. Rule D9 needs one from a Dot.
+- `ram_budget.txt` is unchecked against a link. The `gb_s` context (about 50 KB) and the LCD buffer are allocated, not static.
+- No screenshot from a Dot. Rule D9 needs one.
 - Tilt is not mapped. The D-pad is the D-pad.
+- Host frame times do not predict the P4. The on-device log is the measurement that does.

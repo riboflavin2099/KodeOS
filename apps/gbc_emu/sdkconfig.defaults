@@ -19,3 +19,7 @@ CONFIG_BT_ENABLED=n
 
 # The interpreter's inner loop wants speed. kodeOS itself builds for size.
 CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Frame-time lines are INFO. The board file does not set a level, and a warn
+# default would hide the numbers the first flash is supposed to print.
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y

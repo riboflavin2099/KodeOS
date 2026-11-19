@@ -47,6 +47,19 @@ kode_status_t gbc_rom_boot_job(void *arg, uint32_t *value);
  */
 const uint8_t *gbc_rom_data(uint32_t *len);
 
+/**
+ * @brief Cart RAM published with the ROM, or NULL when the cart has none.
+ * @param len Receives the size. May be NULL.
+ * @return The bytes. Valid while the ROM is published.
+ */
+uint8_t *gbc_rom_ram(uint32_t *len);
+
+/**
+ * @brief File name of the published ROM, not a path.
+ * @return The name, or NULL when nothing is published.
+ */
+const char *gbc_rom_name(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -5,8 +5,10 @@
  */
 #include "app_ao.h"
 
+#include "gbc_core.h"
 #include "gbc_frame.h"
 #include "gbc_rom.h"
+#include "gbc_save.h"
 #include "kode_worker.h"
 
 /** @brief This file's log tag. */
@@ -25,7 +27,9 @@
  * @brief The app's own signals. They start at MAX_SIG and are posted, never published.
  */
 enum AppAoSignals {
-    APP_JOB_DONE_SIG = MAX_SIG  /**< The ROM load returned. */
+    APP_JOB_DONE_SIG = MAX_SIG, /**< The ROM load returned. */
+    APP_SAVE_SIG,               /**< The frame task wants a battery write. */
+    APP_SAVE_DONE_SIG           /**< The save job returned. */
 };
 
 /**
@@ -35,7 +39,52 @@ typedef struct {
     QActive super;            /**< The QP/C base. Stays first. */
     kode_worker_t worker;     /**< File reads run here, off the Active Object's step. */
     uint16_t job_seq;         /**< The sequence number of the load this object waits for. */
+    uint16_t save_seq;        /**< The sequence number of the save it waits for. */
+    bool     save_busy;       /**< A save job has been submitted and not answered. */
 } AppAo;
+
+/** @brief Posted from the frame task. Static, so the post does not allocate. */
+static QEvt const s_save_req = QEVT_INITIALIZER(APP_SAVE_SIG);
+
+/**
+ * @brief Write cart RAM and the clock. Runs on the worker.
+ */
+static kode_status_t save_job(void *arg, uint32_t *value)
+{
+    uint32_t ram_len = 0U;
+    uint8_t *ram = NULL;
+    const char *name = NULL;
+    int64_t clock = 0;
+    kode_status_t rc = KODE_OK;
+
+    (void)arg;
+    if ( NULL == value )
+    {
+        return KODE_DENIED;
+    }
+    *value = 0U;
+    if ( !gbc_core_save_pending() )
+    {
+        return KODE_OK;
+    }
+    name = gbc_rom_name();
+    ram = gbc_core_cart_ram(&ram_len);
+    clock = gbc_core_clock();
+    if ( NULL == name )
+    {
+        rc = KODE_DENIED;
+    }
+    else
+    {
+        rc = gbc_save_store(name, ram, ram_len, clock);
+        if ( KODE_OK == rc )
+        {
+            gbc_core_save_clear();
+            *value = ram_len;
+        }
+    }
+    return rc;
+}
 
 /** @brief Its event queue. */
 static QEvtPtr s_queue[KQP_AO_QUEUE_LEN];
@@ -54,6 +103,13 @@ static QState AppAo_running(AppAo * const me, QEvt const * const e);
 void AppAo_ctor(void)
 {
     QActive_ctor(&s_ao.super, Q_STATE_CAST(&AppAo_initial));
+}
+
+void AppAo_request_save(void)
+{
+    bool const posted = (bool)QACTIVE_POST_X(AO_App, &s_save_req, 1U, (void *)0);
+
+    (void)posted;
 }
 
 void AppAo_start(void)
@@ -123,6 +179,37 @@ static QState AppAo_running(AppAo * const me, QEvt const * const e)
             {
                 KLOG_I(TAG, "ROM job done: status %u, bytes %lu",
                        (unsigned)done->status, (unsigned long)done->value);
+            }
+            status = Q_HANDLED();
+            break;
+        }
+        case APP_SAVE_SIG:
+        {
+            kode_status_t rc = KODE_OK;
+
+            if ( !me->save_busy )
+            {
+                rc = kode_worker_submit(&me->worker, &save_job, NULL,
+                                        (enum_t)APP_SAVE_DONE_SIG, &me->save_seq);
+                if ( KODE_OK == rc )
+                {
+                    me->save_busy = true;
+                }
+            }
+            status = Q_HANDLED();
+            break;
+        }
+        case APP_SAVE_DONE_SIG:
+        {
+            KqpWorkerDoneEvt const * const done = Q_EVT_CAST(KqpWorkerDoneEvt);
+
+            if ( me->save_seq == done->seq )
+            {
+                me->save_busy = false;
+                if ( KODE_OK != done->status )
+                {
+                    KLOG_W(TAG, "save job status %u", (unsigned)done->status);
+                }
             }
             status = Q_HANDLED();
             break;
