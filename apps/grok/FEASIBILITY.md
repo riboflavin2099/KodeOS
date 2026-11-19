@@ -266,7 +266,7 @@ It does not:
 
 ## Risks
 
-- The image has not been linked here if the ESP-IDF build did not finish. The README says which. Internal RAM, not PSRAM, is what can fail `test component=mem` once TLS and LVGL are both up. `kode_screen` pulls LVGL. A later canvas font could drop that if the static image or the heap is tight.
+- The image linked with ESP-IDF v6.1: `build/grok.bin` is `0x22cfd0` bytes, about 2.17 MB, and the apps region still had about 81% free. It was not flashed. Internal RAM, not PSRAM, is what can fail `test component=mem` once TLS and LVGL are both up. `kode_screen` pulls LVGL. A later canvas font could drop that if the static image or the heap is tight. `ram_budget.txt` has still not been checked with `tools/check_ram.sh`.
 - `api.x.ai`'s certificate chain was not exercised. The bundle is the same one `kdrv_net` uses. A failure is a log line and "could not connect".
 - Chat Completions is the legacy endpoint. It is the right first protocol because Ollama speaks it and the JSON is small. A multi-turn reasoning conversation will be worse on it than on Responses, because reasoning is not sent back. The parser will not have to be thrown away to move.
 - The card and the flash are both readable. The key recommendation is for a personal Dot only.

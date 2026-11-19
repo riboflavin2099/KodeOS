@@ -45,6 +45,8 @@ idf.py build
 
 The image is `build/grok.bin`.
 
+A build with ESP-IDF v6.1 against this tree's SDK produced `build/grok.bin` of `0x22cfd0` bytes, about 2.17 MB. The apps region still had about 81% free. The image fits the mailbox. That build's `idf.py flash` line writes it at `0x1a00000`. It was not flashed: there was no board.
+
 `set-target` is only needed on a fresh tree. `idf.py build` is enough after that.
 
 The host test does not need IDF. Run it from this directory:
@@ -118,6 +120,6 @@ The ordered list is in [FEASIBILITY.md](FEASIBILITY.md). Short form: confirm the
 - The glass updates when the turn ends, not on each token.
 - Eight lines of 119 characters. Older lines drop off.
 - No on-screen keyboard.
-- `ram_budget.txt` is unchecked against a link.
+- `ram_budget.txt` is unchecked against a link. The image did link: `0x22cfd0` bytes.
 - No screenshot. A catalogue review wants one from a Dot.
-- The ESP-IDF build status is in the pull request. A host test is not a flash.
+- Not flashed. There was no board.
