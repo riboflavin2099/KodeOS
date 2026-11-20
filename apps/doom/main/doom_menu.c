@@ -214,6 +214,26 @@ static int row_at(int16_t y, int16_t panel_h)
     return hit;
 }
 
+/**
+ * @brief Apply one row. The index is unsigned so a miss (-1) cannot
+ *        become a subscript GCC treats as inside the table.
+ */
+static void apply_at(unsigned index)
+{
+    /* ROW_MAX is the array length. A runtime count is not enough for
+     * -Warray-bounds: a uint8_t count still allows an index of 254. */
+    if ( ROW_MAX <= index )
+    {
+        return;
+    }
+    if ( (unsigned)s_nrows <= index )
+    {
+        return;
+    }
+    s_row = (uint8_t)index;
+    apply_row(&s_rows[index]);
+}
+
 static void overlay_step(const doom_controls_t *in, int16_t panel_h)
 {
     int hit = -1;
@@ -226,21 +246,24 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
     {
         s_row--;
     }
-    if ( in->down_edge && ((uint8_t)(s_row + 1U) < s_nrows) )
+    if ( in->down_edge && ((unsigned)s_row + 1U) < (unsigned)s_nrows )
     {
         s_row++;
     }
     if ( in->left_edge || in->right_edge )
     {
-        if ( (ROW_SFX == s_rows[s_row].kind) || (ROW_MUSIC == s_rows[s_row].kind)
-            || (ROW_RUN == s_rows[s_row].kind) )
+        unsigned const index = s_row;
+
+        if ( (index < ROW_MAX) && (index < (unsigned)s_nrows)
+            && ((ROW_SFX == s_rows[index].kind) || (ROW_MUSIC == s_rows[index].kind)
+                || (ROW_RUN == s_rows[index].kind)) )
         {
-            apply_row(&s_rows[s_row]);
+            apply_at(index);
         }
     }
     if ( in->fire_edge || in->use_edge )
     {
-        apply_row(&s_rows[s_row]);
+        apply_at(s_row);
     }
     if ( in->finger )
     {
@@ -250,10 +273,9 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
     {
         s_down_row = hit;
     }
-    if ( !in->finger && s_prev_finger && (0 <= s_down_row) && (s_down_row == hit) )
+    if ( !in->finger && s_prev_finger && (hit == s_down_row) )
     {
-        s_row = (uint8_t)hit;
-        apply_row(&s_rows[s_row]);
+        apply_at((unsigned)hit);
     }
     s_prev_finger = in->finger;
 }

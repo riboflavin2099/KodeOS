@@ -87,7 +87,7 @@ Each `*.wad` is printed with the name the scanner chose. A known campaign file t
 
 ## Requirements
 
-- ESP-IDF **v6.1**, target **esp32p4**. The install on the machine that prepared this tree did not finish (`python3 -m venv` failed until `python3-venv` was installed, and a full `idf.py build` was not completed). The steps below are the ones to run. Treat a green `idf.py build` as a follow-up on a machine where `export.sh` succeeds.
+- ESP-IDF **v6.1**, target **esp32p4**. A build on 2026-11-20 produced `build/doom.bin` of `0xb3350` bytes (734,032). The apps region is `0xBC0000` bytes and the size check left `0xb0ccb0` bytes free. The same image also fits the mailbox (`0x5FF000`).
 - The `sdk/` submodule at the KodeOS root (`git submodule update --init sdk`).
 
 ## Build
@@ -152,6 +152,6 @@ Hold the bottom button to return to kodeOS. The app stays installed. Opening the
 - The renderer, the thinker and the sound mixer are not linked.
 - Title art is the lump's name on a plate, not the decoded picture.
 - Legacy of Rust is listed and not playable on this engine pin.
-- `idf.py build` was not completed in the environment that added this tree.
+- `idf.py build` for esp32p4 with ESP-IDF v6.1 completes. The image is 734,032 bytes. Static internal RAM (`DIRAM`) is 222,942 of 655,360 bytes. The 6 MB zone is not allocated yet; it belongs in PSRAM when Chocolate Doom is linked. `id1.wad` (about 35 MB) still has to be streamed.
 - `ram_budget.txt` is unchecked against a link.
 - No screenshot. A catalogue submission needs one from a Dot.
