@@ -230,7 +230,7 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
     {
         s_row++;
     }
-    if ( in->left_edge || in->right_edge )
+    if ( (in->left_edge || in->right_edge) && (s_row < s_nrows) )
     {
         if ( (ROW_SFX == s_rows[s_row].kind) || (ROW_MUSIC == s_rows[s_row].kind)
             || (ROW_RUN == s_rows[s_row].kind) )
@@ -238,7 +238,7 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
             apply_row(&s_rows[s_row]);
         }
     }
-    if ( in->fire_edge || in->use_edge )
+    if ( (in->fire_edge || in->use_edge) && (s_row < s_nrows) )
     {
         apply_row(&s_rows[s_row]);
     }
@@ -250,10 +250,11 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
     {
         s_down_row = hit;
     }
-    if ( !in->finger && s_prev_finger && (0 <= s_down_row) && (s_down_row == hit) )
+    if ( !in->finger && s_prev_finger && (0 <= hit) && (hit < (int)s_nrows)
+        && (hit == s_down_row) )
     {
         s_row = (uint8_t)hit;
-        apply_row(&s_rows[s_row]);
+        apply_row(&s_rows[hit]);
     }
     s_prev_finger = in->finger;
 }
