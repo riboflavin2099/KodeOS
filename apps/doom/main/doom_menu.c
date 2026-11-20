@@ -220,11 +220,18 @@ static int row_at(int16_t y, int16_t panel_h)
  */
 static void apply_at(unsigned index)
 {
-    if ( index < (unsigned)s_nrows )
+    /* ROW_MAX is the array length. A runtime count is not enough for
+     * -Warray-bounds: a uint8_t count still allows an index of 254. */
+    if ( ROW_MAX <= index )
     {
-        s_row = (uint8_t)index;
-        apply_row(&s_rows[index]);
+        return;
     }
+    if ( (unsigned)s_nrows <= index )
+    {
+        return;
+    }
+    s_row = (uint8_t)index;
+    apply_row(&s_rows[index]);
 }
 
 static void overlay_step(const doom_controls_t *in, int16_t panel_h)
@@ -247,7 +254,7 @@ static void overlay_step(const doom_controls_t *in, int16_t panel_h)
     {
         unsigned const index = s_row;
 
-        if ( (index < (unsigned)s_nrows)
+        if ( (index < ROW_MAX) && (index < (unsigned)s_nrows)
             && ((ROW_SFX == s_rows[index].kind) || (ROW_MUSIC == s_rows[index].kind)
                 || (ROW_RUN == s_rows[index].kind)) )
         {
