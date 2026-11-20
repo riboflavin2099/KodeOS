@@ -1,0 +1,7 @@
+data: {"id":"c1","object":"chat.completion.chunk","model":"grok-4.3","choices":[{"index":0,"delta":{"reasoning_content":"Think","role":"assistant"}}]}
+
+data: {"id":"c1","object":"chat.completion.chunk","model":"grok-4.3","choices":[{"index":0,"delta":{"content":"Ah","role":"assistant"}}]}
+
+data: {"id":"c1","object":"chat.completion.chunk","model":"grok-4.3","choices":[{"index":0,"delta":{"content":", there.","role":"assistant"}}]}
+
+data: [DONE]

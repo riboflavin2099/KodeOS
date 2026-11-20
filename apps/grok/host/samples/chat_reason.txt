@@ -1,0 +1,5 @@
+data: {"choices":[{"index":0,"delta":{"reasoning_content":"content","role":"assistant"}}]}
+
+data: {"choices":[{"index":0,"delta":{"content":"Answer"}}]}
+
+data: [DONE]

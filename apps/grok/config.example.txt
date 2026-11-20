@@ -1,0 +1,21 @@
+# Copy to the card as sd/grok/config.txt. Do not commit a filled-in key.
+# The firmware reads this file. It is not part of the image.
+
+base_url=https://api.x.ai/v1
+path=/chat/completions
+model=grok-4.3
+api_key=
+
+# Short answers. The glass keeps eight lines of 119 characters.
+system=You are Grok, a helpful assistant. Answer in a few short sentences.
+
+# Optional. Leave blank and join once from the console with wifi_join.
+# AUTOJOIN brings that network back. The password is not logged.
+# ssid=
+# password=
+
+# A relay on the LAN, which holds the key, uses an empty api_key:
+# base_url=http://192.168.1.20:8787/v1
+# A local Ollama uses the same shape:
+# base_url=http://192.168.1.20:11434/v1
+# model=llama3.2

@@ -1,0 +1,18 @@
+## Catalogue form of the SDK pin (kode-apps rule B1).
+##
+## This fork's scaffold does not use this file under the name the component
+## manager reads. CMakeLists.txt points EXTRA_COMPONENT_DIRS at the sibling
+## sdk/ submodule, commit 1841cc8c13d4b2e3e4d7288b40cdac5de207a133. The file
+## is named idf_component.catalog.yml so a build here does not fetch a second
+## kode on top of that checkout. Rename it to idf_component.yml when the app
+## leaves the tree.
+##
+## When the app moves to its own repository, delete that CMake override and
+## let this file fetch the SDK. Rule B1 wants a published release tag (the
+## newest kode-sdk release or the one before it), not a raw commit. v0.1.1
+## was the newest tag on 2026-11-13 and is NOT this commit.
+dependencies:
+  kodediy/kode:
+    git: https://github.com/kodediy/kode-sdk.git
+    path: components/kode
+    version: 1841cc8c13d4b2e3e4d7288b40cdac5de207a133
