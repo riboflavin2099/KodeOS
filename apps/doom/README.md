@@ -1,6 +1,6 @@
 # Doom
 
-A Doom, Doom II, Heretic and Hexen app for the Kode Dot. This directory is a scaffold: it builds as its own firmware, scans the microSD card for WADs, and draws a game list. It does not run the Doom renderer yet. The research note is [FEASIBILITY.md](FEASIBILITY.md). Licences are in [NOTICE.md](NOTICE.md).
+A Doom, Doom II, Heretic and Hexen app for the Kode Dot. It builds as its own firmware, scans the microSD card for WADs, and runs Chocolate Doom. Heretic and Hexen are in the same image. The research note is [FEASIBILITY.md](FEASIBILITY.md). Licences are in [NOTICE.md](NOTICE.md).
 
 The long-term home of this app is its own repository, made from [kode-app-template](https://github.com/kodediy/kode-app-template), with `project(doom)`. The catalogue ([kode-apps](https://github.com/kodediy/kode-apps)) only accepts that shape. It is kept in this fork so the note and the code can be reviewed together. It is not part of the kodeOS link. The branch is cut from `develop` and does not depend on the Game Boy Color scaffold.
 
@@ -20,10 +20,12 @@ An app is a separate firmware. kodeOS stores it in the `apps` region of flash an
 | `main/doom_menu.c` | Weapon overlay (single tap) and settings (double tap) |
 | `main/doom_input.c` | Top is fire, bottom is use, 300 ms tap window |
 | `main/doom_video.c` | Nearest scale into the panel. PPA path is stubbed |
-| `main/doom_engine.c` | Stand-in view. Chocolate Doom is not linked |
+| `main/doom_engine.c` | Starts Chocolate Doom, Heretic or Hexen on core 0 |
+| `port/` | Video, input, timer, silent sound, and the 6 MB PSRAM zone |
 | `main/doom_audio.c`, `main/doom_save.c` | Speaker refused; config line on the card |
 | `host/test_doom.c` | Host checks, including a directory of real WADs |
-| `third_party/chocolate-doom/UPSTREAM.md` | The engine pin and its GPL-2.0-or-later grant |
+| `host/engine_run.c` | Headless engine run and frame times |
+| `third_party/chocolate-doom/` | Chocolate Doom at the pinned commit, GPL-2.0-or-later |
 
 ## Controls
 
@@ -75,6 +77,15 @@ gcc -std=c11 -Wall -Wextra -Werror -I main -o /tmp/doom_test \
 
 It prints `OK doom`. The synthetic directory it builds is deleted afterwards.
 
+The engine runner links the same three trees and plays a WAD until 200 tics:
+
+```bash
+make -C host engine
+DOOM_WAD_DIR=/path/to/your/wads DOOM_TICS=200 host/build/doom_engine
+```
+
+`DOOM_WAD_DIR` defaults to `/tmp/doom-wads`. It prefers `doom2.wad` or `freedoom2.wad`. A run against Doom II reported `frames 236 gametic 200 wall_avg 28.44 ms wall_max 30.00 ms busy_avg 2.81 ms busy_max 8.00 ms`. Wall time includes the 35 Hz wait. Busy time is the work with that wait removed. Do not commit the WAD.
+
 To identify a folder of WADs you already have (nothing is copied into the repo):
 
 ```bash
@@ -87,7 +98,7 @@ Each `*.wad` is printed with the name the scanner chose. A known campaign file t
 
 ## Requirements
 
-- ESP-IDF **v6.1**, target **esp32p4**. A build on 2026-11-20 produced `build/doom.bin` of `0xb3350` bytes (734,032). The apps region is `0xBC0000` bytes and the size check left `0xb0ccb0` bytes free. The same image also fits the mailbox (`0x5FF000`).
+- ESP-IDF **v6.1**, target **esp32p4**. A build on 2026-11-20 produced `build/doom.bin` of `0x1d74d0` bytes (1,930,448). The apps region is `0xBC0000` bytes and the size check left `0x9e8b30` bytes free (84%). The same image fits the mailbox (`0x5FF000`).
 - The `sdk/` submodule at the KodeOS root (`git submodule update --init sdk`).
 
 ## Build
@@ -136,11 +147,11 @@ Hold the bottom button to return to kodeOS. The app stays installed. Opening the
 
 ## Roadmap
 
-1. Finish `idf.py build` with ESP-IDF v6.1 for esp32p4 and install the image. Confirm the idle list, a tap on one synthetic-free card message, top and bottom, and that holding bottom returns home.
+1. Install the image on a Dot. Confirm the idle list, a tap on one synthetic-free card message, top and bottom, and that holding bottom returns home.
 2. On a card with one IWAD, confirm the screen still shows one large button and that a tap is what launches. With SIGIL and `doom.wad` together, confirm one tap fills both names. With SIGIL alone, confirm the button says it needs `doom.wad`.
 3. Point `host/test_doom.c` at a private directory of `doom.wad`, `doom2.wad`, `heretic.wad`, `hexen.wad`, `tnt.wad`, `plutonia.wad`, `sigil.wad`, `sigil2.wad` and `id1.wad`. Do not copy those files into git.
-4. Import Chocolate Doom at the pinned commit, Doom tree first, SDL removed. Log milliseconds per tic on core 1 with audio off.
-5. Prefix Heretic and Hexen and link them into the same image. If the image exceeds the mailbox (`0x5FF000`), install with `kcli.py`. If it exceeds 8 MiB, split the families.
+4. Time a level on a Dot. The host busy time is a few milliseconds; the panel and the PSRAM zone are not in that number.
+5. Move `states` and `mobjinfo` out of internal RAM if a catalogue submission has to stay under 417,000 bytes. The image already fits the apps region and the mailbox.
 6. Decode `M_DOOM` / `TITLEPIC` / `M_HTIC` / `TITLE` from the WAD into the button well. Keep the text plate when the lump is absent.
 7. Expand the 8-bit frame through `PLAYPAL` and time `doom_video_scale_nearest` against a real PPA SRM client. Keep nearest if it is both fast enough and sharper.
 8. Open the speaker stream and mix sound effects to 48 kHz mono. Music, via Chocolate's OPL, comes after and stays switchable.
@@ -149,9 +160,12 @@ Hold the bottom button to return to kodeOS. The app stays installed. Opening the
 
 ## Known gaps
 
-- The renderer, the thinker and the sound mixer are not linked.
+- Sound is silent. The speaker stream stays closed. Music is not mixed.
 - Title art is the lump's name on a plate, not the decoded picture.
+- The view is still the CPU nearest scale. The PPA path is unchanged.
 - Legacy of Rust is listed and not playable on this engine pin.
-- `idf.py build` for esp32p4 with ESP-IDF v6.1 completes. The image is 734,032 bytes. Static internal RAM (`DIRAM`) is 222,942 of 655,360 bytes. The 6 MB zone is not allocated yet; it belongs in PSRAM when Chocolate Doom is linked. `id1.wad` (about 35 MB) still has to be streamed.
-- `ram_budget.txt` is unchecked against a link.
-- No screenshot. A catalogue submission needs one from a Dot.
+- Heretic and Hexen are linked (`heretic_D_DoomMain`, `hexen_D_DoomMain`) and were not run here: the test folder had no `heretic.wad` or `hexen.wad`.
+- `idf.py build` for esp32p4 with ESP-IDF v6.1 completes. The image is 1,930,448 bytes. Static internal RAM (`DIRAM`) is 495,498 of 655,360 bytes (159,862 left). That is over the 417,000 byte catalogue note because `states` and `mobjinfo` stay in internal `.data`. Engine BSS, 1,180,496 bytes, is in PSRAM. At launch the zone takes another 6 MB of PSRAM, and the 320x200 buffers take about 450 KB more.
+- `id1.wad` (about 35 MB) is streamed from the card. Chocolate Doom does not play it correctly.
+- `ram_budget.txt` is still the draft ceiling. The linked image is larger than that draft.
+- No screenshot. A catalogue submission needs one from a Dot. This tree was not flashed to hardware.

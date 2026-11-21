@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Pull Doom, Heretic, Hexen and the port in whole, so one image holds all three.
+foreach(lang C CXX)
+    set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED TRUE)
+    set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE
+        "-Wl,--push-state,--whole-archive <LINK_ITEM> -Wl,--pop-state")
+endforeach()
+
 # Doom scaffold. An app is its own firmware, so this directory is a project
 # of its own and is not added to the kodeOS build.
 #
