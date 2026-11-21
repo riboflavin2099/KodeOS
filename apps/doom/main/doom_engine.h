@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /**
  * @file doom_engine.h
- * @brief The seat Chocolate Doom will occupy. Nothing here runs a tic.
+ * @brief Chocolate Doom, Heretic and Hexen on a task of their own.
  */
 #ifndef DOOM_ENGINE_H_
 #define DOOM_ENGINE_H_
@@ -31,19 +31,20 @@ bool doom_engine_running(void);
 void doom_engine_pause(bool paused);
 bool doom_engine_paused(void);
 
-/** @brief Remember a weapon slot. The engine is not linked, so this is stored. */
+/** @brief Post a weapon key. Slot is 1..8. */
 void doom_engine_weapon(int slot);
 void doom_engine_strafe(bool on);
 bool doom_engine_strafe_on(void);
 void doom_engine_jump(void);
 void doom_engine_inventory(int dir);
+void doom_engine_always_run(bool on);
 
 const char *doom_engine_title(void);
 doom_engine_t doom_engine_id(void);
 
 /**
- * @brief Paint a 320x200 stand-in. Fire, use and the pad change the picture.
- * While paused, the picture does not advance.
+ * @brief Copy the latest 320x200 RGB565 frame and the held controls.
+ * A dark plate is used until the first engine frame.
  */
 void doom_engine_draw(uint16_t *view, const doom_controls_t *in);
 

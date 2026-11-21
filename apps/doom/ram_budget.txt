@@ -7,6 +7,11 @@
 # static_max is the SDK's own ceiling for the full image. Do not raise it
 # without a static_max_why line, and not past 417000 (rule B8).
 #
+# The linked esp32p4 image uses 495,498 bytes of DIRAM, which is past that
+# ceiling. The extra is Chocolate's initialized tables (states, mobjinfo),
+# about 281 KB of .data. Engine BSS (1,180,496 bytes) is in PSRAM. This
+# draft is left at the rule ceiling so the check still names the overrun.
+#
 # The catalogs live in PSRAM (doom_file.c). The frame task's stack is
 # allocated at run time. Neither has a line here.
 static_max 368520

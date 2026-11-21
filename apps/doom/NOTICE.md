@@ -4,8 +4,8 @@ This file says which licence applies to each part of `apps/doom`. Read it before
 
 | Part | Owner | Licence |
 |---|---|---|
-| the app sources under `main/`, `host/` and the text of this tree | the author of this scaffold, offered under the same terms as kodeOS | GPL-3.0-or-later, with the additional permission below |
-| Chocolate Doom, when it is imported from the commit in `third_party/chocolate-doom/UPSTREAM.md` | id Software, Raven Software, Simon Howard and the other authors named in those files | GPL-2.0-or-later. The firmware conveys it under GPL-3.0-or-later |
+| the app sources under `main/`, `host/`, `port/` and the text of this tree | the author of this app, offered under the same terms as kodeOS | GPL-3.0-or-later, with the additional permission below |
+| Chocolate Doom, imported at the commit in `third_party/chocolate-doom/UPSTREAM.md` | id Software, Raven Software, Simon Howard and the other authors named in those files | GPL-2.0-or-later. The firmware conveys it under GPL-3.0-or-later |
 
 The app links the kode SDK. The SDK is GPL-3.0-or-later, except the parts `sdk/NOTICE.md` names (QP/C is GPL-3.0-or-later or a commercial licence of Quantum Leaps; RFAL is STMicroelectronics SLA0051, which is not an open source licence; the fonts are SIL OFL 1.1). A firmware that links the SDK is conveyed under GPL-3.0-or-later.
 

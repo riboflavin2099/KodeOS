@@ -166,6 +166,7 @@ static void apply_row(const row_t *row)
     else if ( ROW_RUN == row->kind )
     {
         s_run = !s_run;
+        doom_engine_always_run(s_run);
     }
     else if ( ROW_EXIT == row->kind )
     {
@@ -330,6 +331,7 @@ static void start_game(const doom_catalog_t *cat)
     if ( doom_game_select_fill(cat, &launch) )
     {
         doom_engine_launch(&launch);
+        doom_engine_always_run(s_run);
         doom_menu_publish_pick(('\0' != launch.addon[0]) ? launch.addon : launch.iwad);
         AppAo_post_pick();
         s_screen = SCREEN_PLAY;
@@ -438,5 +440,4 @@ void doom_menu_frame(uint16_t *panel, uint16_t *view, int16_t panel_w, int16_t p
         draw_overlay(panel, panel_w, panel_h,
                      (SCREEN_SETTINGS == s_screen) ? "SETTINGS" : "WEAPONS");
     }
-    (void)s_run;
 }

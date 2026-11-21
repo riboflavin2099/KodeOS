@@ -1,7 +1,10 @@
 build/
+host/build/
 managed_components/
 sdkconfig
 sdkconfig.old
 dependencies.lock
 .DS_Store
 *.swp
+*.wad
+*.WAD

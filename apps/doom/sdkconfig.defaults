@@ -19,3 +19,7 @@ CONFIG_BT_ENABLED=n
 
 # The renderer's inner loop wants speed. kodeOS itself builds for size.
 CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Doom, Heretic and Hexen each keep visplanes, openings and the net
+# windows. That BSS is about 1.2 MB, so it lives in PSRAM.
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
